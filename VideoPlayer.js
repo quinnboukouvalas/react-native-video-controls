@@ -42,6 +42,12 @@ export default class VideoPlayer extends Component {
      * All of our values that are updated by the
      * methods and listeners in this class
      */
+
+    const resolutions = this.props.videoResolutions;
+
+    const videoRes =
+      resolutions && resolutions.length > 0 ? resolutions[0] : '';
+
     this.state = {
       // Video
       resizeMode: this.props.resizeMode,
@@ -49,6 +55,7 @@ export default class VideoPlayer extends Component {
       muted: this.props.muted,
       volume: this.props.volume,
       rate: this.props.rate,
+      videoResolution: videoRes,
       // Controls
 
       isFullscreen:
@@ -100,6 +107,7 @@ export default class VideoPlayer extends Component {
       onLoad: this._onLoad.bind(this),
       onPause: this.props.onPause,
       onPlay: this.props.onPlay,
+      onVideoResolutionChange: this.props.onVideoResolutionChange,
     };
 
     /**
@@ -110,6 +118,8 @@ export default class VideoPlayer extends Component {
       togglePlayPause: this._togglePlayPause.bind(this),
       toggleControls: this._toggleControls.bind(this),
       toggleTimer: this._toggleTimer.bind(this),
+      toggleRate: this._toggleRate.bind(this),
+      toggleVideoResolution: this._toggleVideoResolution.bind(this),
     };
 
     /**
@@ -161,7 +171,7 @@ export default class VideoPlayer extends Component {
     };
   }
 
-  componentDidUpdate = prevProps => {
+  componentDidUpdate = (prevProps) => {
     const {isFullscreen} = this.props;
 
     if (prevProps.isFullscreen !== isFullscreen) {
@@ -524,6 +534,31 @@ export default class VideoPlayer extends Component {
     let state = this.state;
     state.showTimeRemaining = !state.showTimeRemaining;
     this.setState(state);
+  }
+
+  _toggleRate() {
+    const rates = this.props.rates;
+    const indexOfCurrentRate = rates.indexOf(this.state.rate);
+    if (indexOfCurrentRate < 0) return;
+    const nextIndex = (indexOfCurrentRate + 1) % rates.length;
+    const rate = rates[nextIndex];
+    this.setState({rate});
+  }
+
+  _toggleVideoResolution() {
+    const videoResolutions = this.props.videoResolutions;
+    const indexOfCurrentVideoResolution = videoResolutions.indexOf(
+      this.state.videoResolution,
+    );
+    if (indexOfCurrentVideoResolution < 0) return;
+    const nextIndex =
+      (indexOfCurrentVideoResolution + 1) % videoResolutions.length;
+    const videoResolution = videoResolutions[nextIndex];
+
+    typeof this.events.onVideoResolutionChange === 'function' &&
+      this.events.onVideoResolutionChange(videoResolution);
+
+    this.setState({videoResolution});
   }
 
   /**
@@ -1037,6 +1072,26 @@ export default class VideoPlayer extends Component {
     );
   }
 
+  renderRateControl() {
+    const rateToString =
+      (this.state.rate === 1 ? '1' : this.state.rate.toFixed(2)) + 'x';
+    return this.renderControl(
+      <Text style={styles.controls.rateText}>{rateToString}</Text>,
+      this.methods.toggleRate,
+      styles.controls.rate,
+    );
+  }
+
+  renderVideoResolution() {
+    return this.renderControl(
+      <Text style={styles.controls.videoResolutionText}>
+        {this.state.videoResolution}
+      </Text>,
+      this.methods.toggleVideoResolution,
+      styles.controls.videoResolution,
+    );
+  }
+
   /**
    * Render bottom control group and wrap it in a holder
    */
@@ -1050,6 +1105,13 @@ export default class VideoPlayer extends Component {
     const playPauseControl = this.props.disablePlayPause
       ? this.renderNullControl()
       : this.renderPlayPause();
+    const rateControl = this.props.rates
+      ? this.renderRateControl()
+      : this.renderNullControl();
+    const videoResolutionsControl =
+      this.props.videoResolutions && this.props.videoResolutions.length > 0
+        ? this.renderVideoResolution()
+        : this.renderNullControl();
 
     return (
       <Animated.View
@@ -1067,7 +1129,11 @@ export default class VideoPlayer extends Component {
           {seekbarControl}
           <SafeAreaView
             style={[styles.controls.row, styles.controls.bottomControlGroup]}>
-            {playPauseControl}
+            <SafeAreaView style={[styles.controls.leftBottomControlGroup]}>
+              {playPauseControl}
+              {rateControl}
+              {videoResolutionsControl}
+            </SafeAreaView>
             {this.renderTitle()}
             {timerControl}
           </SafeAreaView>
@@ -1087,7 +1153,7 @@ export default class VideoPlayer extends Component {
         {...this.player.seekPanResponder.panHandlers}>
         <View
           style={styles.seekbar.track}
-          onLayout={event =>
+          onLayout={(event) =>
             (this.player.seekerWidth = event.nativeEvent.layout.width)
           }
           pointerEvents={'none'}>
@@ -1217,7 +1283,7 @@ export default class VideoPlayer extends Component {
         <View style={[styles.player.container, this.styles.containerStyle]}>
           <Video
             {...this.props}
-            ref={videoPlayer => (this.player.ref = videoPlayer)}
+            ref={(videoPlayer) => (this.player.ref = videoPlayer)}
             resizeMode={this.state.resizeMode}
             volume={this.state.volume}
             paused={this.state.paused}
@@ -1354,6 +1420,12 @@ const styles = {
       marginRight: 12,
       marginBottom: 0,
     },
+    leftBottomControlGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'stretch',
+      justifyContent: 'space-between',
+    },
     volume: {
       flexDirection: 'row',
     },
@@ -1362,7 +1434,7 @@ const styles = {
     },
     playPause: {
       position: 'relative',
-      width: 80,
+      width: 45,
       zIndex: 0,
     },
     title: {
@@ -1375,13 +1447,31 @@ const styles = {
       textAlign: 'center',
     },
     timer: {
-      width: 80,
+      width: 100,
     },
     timerText: {
       backgroundColor: 'transparent',
       color: '#FFF',
-      fontSize: 11,
+      fontSize: 15,
       textAlign: 'right',
+    },
+    rate: {
+      width: 70,
+    },
+    rateText: {
+      textAlign: 'center',
+      backgroundColor: 'transparent',
+      color: '#FFF',
+      fontSize: 15,
+    },
+    videoResolution: {
+      width: 77,
+    },
+    videoResolutionText: {
+      textAlign: 'center',
+      backgroundColor: 'transparent',
+      color: '#FFF',
+      fontSize: 15,
     },
   }),
   volume: StyleSheet.create({
