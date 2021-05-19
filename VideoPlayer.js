@@ -20,6 +20,7 @@ export default class VideoPlayer extends Component {
     toggleResizeModeOnFullscreen: true,
     controlAnimationTiming: 500,
     doubleTapTime: 130,
+    skipTime: 10,
     playInBackground: false,
     playWhenInactive: false,
     resizeMode: 'contain',
@@ -60,6 +61,7 @@ export default class VideoPlayer extends Component {
 
       isFullscreen:
         this.props.isFullScreen || this.props.resizeMode === 'cover' || false,
+      width: 0,
       showTimeRemaining: this.props.showTimeRemaining,
       showHours: this.props.showHours,
       volumeTrackWidth: 0,
@@ -105,9 +107,11 @@ export default class VideoPlayer extends Component {
       onProgress: this._onProgress.bind(this),
       onSeek: this._onSeek.bind(this),
       onLoad: this._onLoad.bind(this),
+      onDoublePress: this._onDoublePress.bind(this),
       onPause: this.props.onPause,
       onPlay: this.props.onPlay,
       onVideoResolutionChange: this.props.onVideoResolutionChange,
+      onComponentLayout: this._onComponentLayout.bind(this),
     };
 
     /**
@@ -159,6 +163,12 @@ export default class VideoPlayer extends Component {
       loader: {
         rotate: new Animated.Value(0),
         MAX_VALUE: 360,
+      },
+      leftDoublePress: {
+        opacity: new Animated.Value(0),
+      },
+      rightDoublePress: {
+        opacity: new Animated.Value(0),
       },
     };
 
@@ -273,6 +283,9 @@ export default class VideoPlayer extends Component {
 
       this.setState(state);
     }
+    if (typeof this.props.onSeek === 'function') {
+      this.props.onSeek(...arguments);
+    }
   }
 
   /**
@@ -303,11 +316,13 @@ export default class VideoPlayer extends Component {
    * One tap toggles controls and/or toggles pause,
    * two toggles fullscreen mode.
    */
-  _onScreenTouch() {
+  _onScreenTouch(touchEvent) {
     if (this.player.tapActionTimeout) {
+      console.log(touchEvent.nativeEvent);
       clearTimeout(this.player.tapActionTimeout);
       this.player.tapActionTimeout = 0;
-      this.methods.toggleFullscreen();
+      // this.methods.toggleFullscreen();
+      this.events.onDoublePress(touchEvent.nativeEvent);
       const state = this.state;
       if (state.showControls) {
         this.resetControlTimeout();
@@ -324,6 +339,46 @@ export default class VideoPlayer extends Component {
         this.player.tapActionTimeout = 0;
       }, this.props.doubleTapTime);
     }
+  }
+
+  _onDoublePress(pressEvent) {
+    const relativeX = parseFloat(pressEvent.locationX / this.state.width);
+    if (Number.isNaN(relativeX)) return;
+    console.log(relativeX);
+    if (relativeX > 1 / 3 && relativeX < 2 / 3) {
+      this.methods.toggleFullscreen();
+    } else {
+      const isForward = relativeX > 2 / 3;
+      this.skipTime(isForward);
+      this.doublePressAnimation(isForward);
+    }
+  }
+
+  skipTime(isForward) {
+    let time =
+      this.state.currentTime +
+      (isForward ? +this.props.skipTime : -this.props.skipTime);
+
+    time = parseFloat(Math.max(time, 0));
+
+    let state = this.state;
+    if (time >= state.duration && !state.loading) {
+      state.paused = true;
+      this.events.onEnd();
+    } else {
+      this.seekTo(time);
+      this.setControlTimeout();
+      state.paused = state.originallyPaused;
+      state.seeking = false;
+    }
+    this.setState(state);
+  }
+
+  _onComponentLayout(layoutEvent) {
+    // console.log('layout event', layoutEvent.nativeEvent.layout);
+    let state = this.state;
+    state.width = layoutEvent.nativeEvent.layout.width;
+    this.setState(state);
   }
 
   /**
@@ -444,6 +499,31 @@ export default class VideoPlayer extends Component {
         }),
       ]).start(this.loadAnimation.bind(this));
     }
+  }
+
+  /**
+   * Opacity animation when a double press happens (left or right)
+   */
+  doublePressAnimation(right) {
+    const animation = right
+      ? this.animations.rightDoublePress
+      : this.animations.leftDoublePress;
+
+    const duration = 500 / 2;
+    Animated.sequence([
+      Animated.timing(animation.opacity, {
+        toValue: 1,
+        easing: Easing.linear,
+        useNativeDriver: false,
+        duration,
+      }),
+      Animated.timing(animation.opacity, {
+        toValue: 0,
+        easing: Easing.linear,
+        useNativeDriver: false,
+        duration,
+      }),
+    ]).start();
   }
 
   /**
@@ -1257,6 +1337,34 @@ export default class VideoPlayer extends Component {
     return null;
   }
 
+  renderSkipIcons() {
+    const animatedSkipIcon = (position) => {
+      const imageName = position === 'right' ? 'skipForward' : 'skipBackward';
+      const animation =
+        position === 'right'
+          ? this.animations.rightDoublePress
+          : this.animations.leftDoublePress;
+      return (
+        <Animated.Image
+          source={require('./assets/img/' + imageName + '.png')}
+          style={[
+            styles.skipIcons.icon,
+            {
+              opacity: animation.opacity,
+            },
+          ]}
+        />
+      );
+    };
+
+    return (
+      <View style={styles.skipIcons.container}>
+        {animatedSkipIcon('left')}
+        {animatedSkipIcon('right')}
+      </View>
+    );
+  }
+
   renderError() {
     if (this.state.error) {
       return (
@@ -1279,6 +1387,7 @@ export default class VideoPlayer extends Component {
     return (
       <TouchableWithoutFeedback
         onPress={this.events.onScreenTouch}
+        onLayout={this.events.onComponentLayout}
         style={[styles.player.container, this.styles.containerStyle]}>
         <View style={[styles.player.container, this.styles.containerStyle]}>
           <Video
@@ -1298,6 +1407,7 @@ export default class VideoPlayer extends Component {
             style={[styles.player.video, this.styles.videoStyle]}
             source={this.props.source}
           />
+          {this.renderSkipIcons()}
           {this.renderError()}
           {this.renderLoader()}
           {this.renderTopControls()}
@@ -1330,6 +1440,14 @@ const styles = {
       bottom: 0,
       left: 0,
     },
+  }),
+  skipIcons: StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+    },
+    icon: {},
   }),
   error: StyleSheet.create({
     container: {
