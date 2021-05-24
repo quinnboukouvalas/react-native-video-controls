@@ -31,6 +31,7 @@ export default class VideoPlayer extends Component {
     muted: false,
     volume: 1,
     title: '',
+    videoResolution: '480p',
     rate: 1,
     showTimeRemaining: true,
     showHours: false,
@@ -44,12 +45,6 @@ export default class VideoPlayer extends Component {
      * methods and listeners in this class
      */
 
-    const resolutions = this.props.videoResolutions;
-
-    const videoRes = (resolutions && resolutions.length > 0) 
-      ? resolutions[0]
-      : ''
-
     this.state = {
       // Video
       resizeMode: this.props.resizeMode,
@@ -57,7 +52,7 @@ export default class VideoPlayer extends Component {
       muted: this.props.muted,
       volume: this.props.volume,
       rate: this.props.rate,
-      videoResolution: videoRes,
+      videoResolution: this.props.videoResolution,
       // Controls
 
       isFullscreen:
@@ -107,11 +102,13 @@ export default class VideoPlayer extends Component {
       onLoadStart: this._onLoadStart.bind(this),
       onProgress: this._onProgress.bind(this),
       onSeek: this._onSeek.bind(this),
+      onSeekStarted: this.props.onSeekStarted,
       onLoad: this._onLoad.bind(this),
       onDoublePress: this._onDoublePress.bind(this),
       onPause: this.props.onPause,
       onPlay: this.props.onPlay,
       onVideoResolutionChange: this.props.onVideoResolutionChange,
+      onRateChange: this.props.onRateChange,
       onComponentLayout: this._onComponentLayout.bind(this),
     };
 
@@ -622,7 +619,11 @@ export default class VideoPlayer extends Component {
     const indexOfCurrentRate = rates.indexOf(this.state.rate);
     if (indexOfCurrentRate < 0) return;
     const nextIndex = (indexOfCurrentRate + 1) % rates.length;
-    const rate = rates[nextIndex]; 
+    const rate = rates[nextIndex];
+
+    typeof this.events.onRateChange === 'function' &&
+        this.events.onRateChange(rate);
+
     this.setState({rate});
   }
   
@@ -762,6 +763,9 @@ export default class VideoPlayer extends Component {
    * @param {float} time time to seek to in ms
    */
   seekTo(time = 0) {
+    if (typeof this.events.onSeekStarted === 'function') {
+      this.events.onSeekStarted(this.state.currentTime, time);
+    }
     let state = this.state;
     state.currentTime = time;
     this.player.ref.seek(time);
@@ -942,6 +946,9 @@ export default class VideoPlayer extends Component {
             state.scrubbing = true;
 
             this.setState(state);
+            if (typeof this.events.onSeekStarted === 'function') {
+              this.events.onSeekStarted(this.state.currentTime, time);
+            }
             setTimeout(() => {
               this.player.ref.seek(time, this.player.scrubbingTimeStep);
             }, 1);
