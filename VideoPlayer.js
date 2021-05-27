@@ -1158,7 +1158,7 @@ export default class VideoPlayer extends Component {
   }
 
   renderRateControl() {
-    const rateToString = (this.state.rate === 1 ? '1' : this.state.rate.toFixed(2)) + 'x';
+    const rateToString = Number(this.state.rate.toFixed(2)) + 'x';
     return this.renderControl(
       <Text style={styles.controls.rateText}>{rateToString}</Text>,
       this.methods.toggleRate,
