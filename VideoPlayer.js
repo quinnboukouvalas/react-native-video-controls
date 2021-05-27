@@ -1425,7 +1425,7 @@ const styles = {
   player: StyleSheet.create({
     container: {
       overflow: 'hidden',
-      backgroundColor: '#fff',
+      backgroundColor: '#000',
       flex: 1,
       alignSelf: 'stretch',
       justifyContent: 'space-between',
