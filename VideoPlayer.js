@@ -1342,20 +1342,22 @@ export default class VideoPlayer extends Component {
     return (
     <View style={styles.skipIcons.container}>
       <Animated.Image
-        source={require('./assets/img/skipBackward.png')}
+        source={require('./assets/img/angle-double-left-solid.png')}
         style={[
           styles.skipIcons.icon,
           {
             opacity: this.animations.leftDoublePress.opacity,
+            tintColor: this.props.skipIconColor || '#FFF',
           }
         ]}
       />
       <Animated.Image
-        source={require('./assets/img/skipForward.png')}
+        source={require('./assets/img/angle-double-right-solid.png')}
         style={[
           styles.skipIcons.icon,
           {
             opacity: this.animations.rightDoublePress.opacity,
+            tintColor: this.props.skipIconColor || '#FFF',
           }
         ]}
       />
@@ -1452,12 +1454,19 @@ const styles = {
       left: 0,
     },
     icon: {
+      width: 60,
+      height: 60,
+      // borderWidth: 1,
+      borderColor: 'rgba(0, 0, 0, 0.25)',
+      borderRadius: 99999,
       marginHorizontal: 50,
+      resizeMode: 'center',
+      backgroundColor: 'rgba(255, 255, 255, 0.25)'
     }
   }),
   error: StyleSheet.create({
     container: {
-      backgroundColor: 'rgba( 0, 0, 0, 0.5 )',
+      backgroundColor: 'rgba(0,0,0,0.5)',
       position: 'absolute',
       top: 0,
       right: 0,
@@ -1636,14 +1645,14 @@ const styles = {
     },
     track: {
       backgroundColor: '#333',
-      height: 1,
+      height: 3,
       position: 'relative',
       top: 14,
       width: '100%',
     },
     fill: {
-      backgroundColor: '#FFF',
-      height: 1,
+      backgroundColor: '#ff0f0f',
+      height: 3,
       width: '100%',
     },
     handle: {
@@ -1655,10 +1664,10 @@ const styles = {
     circle: {
       borderRadius: 12,
       position: 'relative',
-      top: 8,
+      top: 9,
       left: 8,
-      height: 12,
-      width: 12,
+      height: 13,
+      width: 13,
     },
   }),
 };
