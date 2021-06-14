@@ -57,7 +57,7 @@ export default class VideoPlayer extends Component {
       muted: this.props.muted,
       volume: this.props.volume,
       rate: this.props.rate,
-      resetRate: false,
+      resetRate: Platform.OS === 'android',
       videoResolution: this.props.videoResolution || this.props.videoSources[0]?.videoResolution,
       changingVideoResolution: false,
       // Controls
@@ -234,11 +234,6 @@ export default class VideoPlayer extends Component {
    */
   _onLoad(data = {}) {
     let state = this.state;
-    
-    //Android MediaPlayer fix for rate bug after source change
-    if (this.state.resetRate) {
-      state.resetRate = false;
-    }
 
     if (state.changingVideoResolution) {
       console.log('restorePreviousTime', state.currentTime);
@@ -267,6 +262,11 @@ export default class VideoPlayer extends Component {
   _onProgress(data = {}) {
     
     let state = this.state;
+
+    //Android MediaPlayer fix for rate bug after source change
+    if (this.state.resetRate) {
+      state.resetRate = false;
+    }
 
     // console.log('changinVideoRes', state.changingVideoResolution, state.currentTime, data.currentTime);
     if (state.changingVideoResolution && data.currentTime === 0) {
