@@ -248,6 +248,8 @@ export default class VideoPlayer extends Component {
       this.resetControlTimeout();
     }
 
+    this.flashBackwardForwardButtons();
+
     if (typeof this.props.onLoad === 'function') {
       this.props.onLoad(...arguments);
     }
@@ -537,19 +539,36 @@ export default class VideoPlayer extends Component {
       : this.animations.leftDoublePress;
 
     const duration = 700 / 2;
+    const easing = Easing.linear;
+
+    const opacityOnIn = {toValue: 1, easing, duration, useNativeDriver: false};
+    const opacityOffIn = {toValue: 0, easing, duration, useNativeDriver: false};
     Animated.sequence([
-      Animated.timing(animation.opacity, {
-        toValue: 1,
-        easing: Easing.linear,
-        useNativeDriver: false,
-        duration,
-      }), 
-      Animated.timing(animation.opacity, {
-        toValue: 0,
-        easing: Easing.linear,
-        useNativeDriver: false,
-        duration,
-      }), 
+      Animated.timing(animation.opacity, opacityOnIn), 
+      Animated.timing(animation.opacity, opacityOffIn), 
+    ]).start();
+  }
+
+  /**
+   * Shows both backward and forward buttons then hides them
+   */
+  flashBackwardForwardButtons() {
+
+    const skipBackward = this.animations.leftDoublePress;
+    const skipForward = this.animations.rightDoublePress;
+    
+    const opacityOnIn = {toValue: 1, easing: Easing.linear, duration: 350, useNativeDriver: false};
+    const opacityOffIn = {toValue: 0, easing: Easing.ease, duration: 1200, useNativeDriver: false};
+
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(skipBackward.opacity, opacityOnIn), 
+        Animated.timing(skipForward.opacity, opacityOnIn), 
+      ]),
+      Animated.parallel([
+        Animated.timing(skipBackward.opacity, opacityOffIn), 
+        Animated.timing(skipForward.opacity, opacityOffIn), 
+      ])
     ]).start();
   }
 
