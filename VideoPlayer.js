@@ -270,7 +270,6 @@ export default class VideoPlayer extends Component {
       state.resetRate = false;
     }
 
-    // console.log('changinVideoRes', state.changingVideoResolution, state.currentTime, data.currentTime);
     if (state.changingVideoResolution && data.currentTime === 0) {
       this.setState({changingVideoResolution: false});
       return;
@@ -859,7 +858,7 @@ export default class VideoPlayer extends Component {
    * its track's width.
    *
    * @param {float} val position of the volume handle in px
-   * @return {float} contrained position of the volume handle in px
+   * @return {float} constrained position of the volume handle in px
    */
   constrainToVolumeMinMax(val = 0) {
     if (val <= 0) {
