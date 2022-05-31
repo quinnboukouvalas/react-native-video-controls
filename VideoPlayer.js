@@ -1,3 +1,4 @@
+/* eslint-disable curly */
 import React, {Component} from 'react';
 import Video from 'react-native-video';
 import {
@@ -37,6 +38,9 @@ export default class VideoPlayer extends Component {
     rate: 1,
     showTimeRemaining: true,
     showHours: false,
+    isCasting: false,
+    elapsedTime: 0,
+    googleCastButton: null,
   };
 
   constructor(props) {
@@ -47,8 +51,10 @@ export default class VideoPlayer extends Component {
      * methods and listeners in this class
      */
 
-    const videoSource = this.props.videoSources.find(vs => vs.videoResolution === this.props.videoResolution)
-      ?? this.props.videoSource[0];
+    const videoSource =
+      this.props.videoSources.find(
+        vs => vs.videoResolution === this.props.videoResolution,
+      ) ?? this.props.videoSources[0];
 
     this.state = {
       // Video
@@ -58,7 +64,9 @@ export default class VideoPlayer extends Component {
       volume: this.props.volume,
       rate: this.props.rate,
       resetRate: Platform.OS === 'android',
-      videoResolution: this.props.videoResolution || this.props.videoSources[0]?.videoResolution,
+      videoResolution:
+        this.props.videoResolution ||
+        this.props.videoSources[0]?.videoResolution,
       changingVideoResolution: false,
       // Controls
 
@@ -239,7 +247,7 @@ export default class VideoPlayer extends Component {
       console.log('restorePreviousTime', state.currentTime);
       this.seekTo(state.currentTime);
     }
-    
+
     state.duration = data.duration;
     state.loading = false;
     this.setState(state);
@@ -262,7 +270,6 @@ export default class VideoPlayer extends Component {
    * @param {object} data The video meta data
    */
   _onProgress(data = {}) {
-    
     let state = this.state;
 
     //Android MediaPlayer fix for rate bug after source change
@@ -330,7 +337,7 @@ export default class VideoPlayer extends Component {
    *
    * @param {object} err  Err obj returned from <Video> component
    */
-  _onError(err) {
+  _onError(_err) {
     let state = this.state;
     state.error = true;
     state.loading = false;
@@ -373,19 +380,19 @@ export default class VideoPlayer extends Component {
     const relativeX = parseFloat(pressEvent.locationX / this.state.width);
     if (Number.isNaN(relativeX)) return;
     console.log(relativeX);
-    if (relativeX > 1/3 && relativeX < 2/3) {
+    if (relativeX > 1 / 3 && relativeX < 2 / 3) {
       this.methods.toggleFullscreen();
     } else {
-      const isForward = relativeX > 2/3;
+      const isForward = relativeX > 2 / 3;
       this.skipTime(isForward);
       this.doublePressAnimation(isForward);
     }
   }
 
   skipTime(isForward) {
-    let time = this.state.currentTime + (isForward 
-        ? +this.props.skipTime 
-        : -this.props.skipTime);
+    let time =
+      this.state.currentTime +
+      (isForward ? +this.props.skipTime : -this.props.skipTime);
 
     time = parseFloat(Math.max(time, 0));
 
@@ -533,7 +540,7 @@ export default class VideoPlayer extends Component {
    * Opacity animation when a double press happens (left or right)
    */
   doublePressAnimation(right) {
-    const animation = right 
+    const animation = right
       ? this.animations.rightDoublePress
       : this.animations.leftDoublePress;
 
@@ -543,8 +550,8 @@ export default class VideoPlayer extends Component {
     const opacityOnIn = {toValue: 1, easing, duration, useNativeDriver: false};
     const opacityOffIn = {toValue: 0, easing, duration, useNativeDriver: false};
     Animated.sequence([
-      Animated.timing(animation.opacity, opacityOnIn), 
-      Animated.timing(animation.opacity, opacityOffIn), 
+      Animated.timing(animation.opacity, opacityOnIn),
+      Animated.timing(animation.opacity, opacityOffIn),
     ]).start();
   }
 
@@ -552,22 +559,31 @@ export default class VideoPlayer extends Component {
    * Shows both backward and forward buttons then hides them
    */
   flashBackwardForwardButtons() {
-
     const skipBackward = this.animations.leftDoublePress;
     const skipForward = this.animations.rightDoublePress;
-    
-    const opacityOnIn = {toValue: 1, easing: Easing.linear, duration: 350, useNativeDriver: false};
-    const opacityOffIn = {toValue: 0, easing: Easing.ease, duration: 1200, useNativeDriver: false};
+
+    const opacityOnIn = {
+      toValue: 1,
+      easing: Easing.linear,
+      duration: 350,
+      useNativeDriver: false,
+    };
+    const opacityOffIn = {
+      toValue: 0,
+      easing: Easing.ease,
+      duration: 1200,
+      useNativeDriver: false,
+    };
 
     Animated.sequence([
       Animated.parallel([
-        Animated.timing(skipBackward.opacity, opacityOnIn), 
-        Animated.timing(skipForward.opacity, opacityOnIn), 
+        Animated.timing(skipBackward.opacity, opacityOnIn),
+        Animated.timing(skipForward.opacity, opacityOnIn),
       ]),
       Animated.parallel([
-        Animated.timing(skipBackward.opacity, opacityOffIn), 
-        Animated.timing(skipForward.opacity, opacityOffIn), 
-      ])
+        Animated.timing(skipBackward.opacity, opacityOffIn),
+        Animated.timing(skipForward.opacity, opacityOffIn),
+      ]),
     ]).start();
   }
 
@@ -669,14 +685,16 @@ export default class VideoPlayer extends Component {
     const rate = rates[nextIndex];
 
     typeof this.events.onRateChange === 'function' &&
-        this.events.onRateChange(rate);
+      this.events.onRateChange(rate);
 
     this.setState({rate});
   }
 
   _toggleVideoResolution() {
     const {videoSources} = this.props;
-    const indexOfCurrentResolution = videoSources.findIndex(vs => vs.videoResolution === this.state.videoResolution);
+    const indexOfCurrentResolution = videoSources.findIndex(
+      vs => vs.videoResolution === this.state.videoResolution,
+    );
     if (this.state.loading || indexOfCurrentResolution < 0) return;
 
     const nextIndex = (indexOfCurrentResolution + 1) % videoSources.length;
@@ -685,18 +703,18 @@ export default class VideoPlayer extends Component {
     // console.log('toggleVideoRes new uri', uri.split('mp4')[0]);
     // console.log('toggleVideoRes prev uri', this.state.source.uri.split('mp4')[0]);
     // console.log('toggleVideRes source', {uri});
-    
+
     let state = this.state;
     state.videoResolution = videoResolution;
     state.source = {uri};
     state.changingVideoResolution = true;
     this.setState(state);
-    
+
     if (typeof this.events.onVideoResolutionChange === 'function') {
-      this.events.onVideoResolutionChange(videoResolution)
-    };
+      this.events.onVideoResolutionChange(videoResolution);
+    }
   }
-  
+
   /**
    * The default 'onBack' function pops the navigator
    * and as such the video player requires a
@@ -713,17 +731,27 @@ export default class VideoPlayer extends Component {
   }
 
   /**
+   * If it's casting the current time is passed by the props
+   * otherwise use the internal one
+   */
+  getCurrentTime() {
+    return this.props.isCasting
+      ? this.props.elapsedTime ?? 0
+      : this.state.currentTime;
+  }
+
+  /**
    * Calculate the time to show in the timer area
    * based on if they want to see time remaining
    * or duration. Formatted to look as 00:00.
    */
   calculateTime() {
     if (this.state.showTimeRemaining) {
-      const time = this.state.duration - this.state.currentTime;
+      const time = this.state.duration - this.getCurrentTime();
       return `-${this.formatTime(time)}`;
     }
 
-    return this.formatTime(this.state.currentTime);
+    return this.formatTime(this.getCurrentTime());
   }
 
   /**
@@ -799,7 +827,7 @@ export default class VideoPlayer extends Component {
    * @return {float} position of seeker handle in px based on currentTime
    */
   calculateSeekerPosition() {
-    const percent = this.state.currentTime / this.state.duration;
+    const percent = this.getCurrentTime() / this.state.duration;
     return this.player.seekerWidth * percent;
   }
 
@@ -823,6 +851,8 @@ export default class VideoPlayer extends Component {
     if (typeof this.events.onSeekStarted === 'function') {
       this.events.onSeekStarted(this.state.currentTime, time);
     }
+
+    if (this.props.isCasting) return;
     let state = this.state;
     state.currentTime = time;
     this.player.ref.seek(time);
@@ -915,7 +945,7 @@ export default class VideoPlayer extends Component {
    */
   UNSAFE_componentWillReceiveProps(nextProps) {
     // console.log('video controls receives new props:', this.props, nextProps);
-    const {videoSources, paused, videoStyle, style, rate, videoResolution} = nextProps;
+    const {videoSources, paused, videoStyle, style, rate} = nextProps;
     let state = this.state;
 
     state.paused = paused;
@@ -924,12 +954,15 @@ export default class VideoPlayer extends Component {
     if (state.videoSources !== videoSources) {
       if (!state.loading) {
         console.log('loading new sources');
-        const {uri, videoResolution} = videoSources.find(vs => vs.videoResolution === state.videoResolution) ?? {};
+        const {uri, videoResolution} =
+          videoSources.find(
+            vs => vs.videoResolution === state.videoResolution,
+          ) ?? {};
         if (!uri || !videoResolution) {
           state.source = {uri: videoSources[0].uri};
           state.videoResolution = videoSources[0].videoResolution;
         } else {
-          state.source = {uri}
+          state.source = {uri};
           state.videoResolution = videoResolution;
         }
         state.videoSources = videoSources;
@@ -943,8 +976,8 @@ export default class VideoPlayer extends Component {
       }
     }
 
-      this.styles.videoStyle = videoStyle;
-      this.styles.containerStyle = style;
+    this.styles.videoStyle = videoStyle;
+    this.styles.containerStyle = style;
 
     this.setState(state);
   }
@@ -1153,6 +1186,9 @@ export default class VideoPlayer extends Component {
     const volumeControl = this.props.disableVolume
       ? this.renderNullControl()
       : this.renderVolume();
+    const googleCastControl = !this.props.googleCastButton
+      ? this.renderNullControl()
+      : this.props.googleCastButton;
     const fullscreenControl = this.props.disableFullscreen
       ? this.renderNullControl()
       : this.renderFullscreen();
@@ -1173,6 +1209,7 @@ export default class VideoPlayer extends Component {
           <SafeAreaView style={styles.controls.topControlGroup}>
             {backControl}
             <View style={styles.controls.pullRight}>
+              {googleCastControl}
               {volumeControl}
               {fullscreenControl}
             </View>
@@ -1240,15 +1277,17 @@ export default class VideoPlayer extends Component {
     return this.renderControl(
       <Text style={styles.controls.rateText}>{rateToString}</Text>,
       this.methods.toggleRate,
-      styles.controls.rate, 
+      styles.controls.rate,
     );
   }
-  
+
   renderVideoResolution() {
     return this.renderControl(
-      <Text style={styles.controls.videoResolutionText}>{this.state.videoResolution}</Text>,
+      <Text style={styles.controls.videoResolutionText}>
+        {this.state.videoResolution}
+      </Text>,
       this.methods.toggleVideoResolution,
-      styles.controls.videoResolution, 
+      styles.controls.videoResolution,
       this.state.loading,
     );
   }
@@ -1268,10 +1307,11 @@ export default class VideoPlayer extends Component {
       : this.renderPlayPause();
     const rateControl = this.props.rates
       ? this.renderRateControl()
-      : this.renderNullControl()
-    const videoResolutionsControl = (this.props.videoSources?.length > 0)
-      ? this.renderVideoResolution()
-      : this.renderNullControl()
+      : this.renderNullControl();
+    const videoResolutionsControl =
+      this.props.videoSources?.length > 0
+        ? this.renderVideoResolution()
+        : this.renderNullControl();
 
     return (
       <Animated.View
@@ -1417,30 +1457,47 @@ export default class VideoPlayer extends Component {
     return null;
   }
 
+  /**
+   * Show loading icon
+   */
+  renderCastIcon() {
+    if (this.props.isCasting) {
+      return (
+        <View style={styles.googleCast.container}>
+          <Image
+            source={require('./assets/img/google-cast.png')}
+            style={styles.googleCast.icon}
+          />
+        </View>
+      );
+    }
+    return null;
+  }
+
   renderSkipIcons() {
     return (
-    <View style={styles.skipIcons.container}>
-      <Animated.Image
-        source={require('./assets/img/angle-double-left-solid.png')}
-        style={[
-          styles.skipIcons.icon,
-          {
-            opacity: this.animations.leftDoublePress.opacity,
-            tintColor: this.props.skipIconColor || '#FFF',
-          }
-        ]}
-      />
-      <Animated.Image
-        source={require('./assets/img/angle-double-right-solid.png')}
-        style={[
-          styles.skipIcons.icon,
-          {
-            opacity: this.animations.rightDoublePress.opacity,
-            tintColor: this.props.skipIconColor || '#FFF',
-          }
-        ]}
-      />
-    </View>
+      <View style={styles.skipIcons.container}>
+        <Animated.Image
+          source={require('./assets/img/angle-double-left-solid.png')}
+          style={[
+            styles.skipIcons.icon,
+            {
+              opacity: this.animations.leftDoublePress.opacity,
+              tintColor: this.props.skipIconColor || '#FFF',
+            },
+          ]}
+        />
+        <Animated.Image
+          source={require('./assets/img/angle-double-right-solid.png')}
+          style={[
+            styles.skipIcons.icon,
+            {
+              opacity: this.animations.rightDoublePress.opacity,
+              tintColor: this.props.skipIconColor || '#FFF',
+            },
+          ]}
+        />
+      </View>
     );
   }
 
@@ -1474,7 +1531,7 @@ export default class VideoPlayer extends Component {
             ref={videoPlayer => (this.player.ref = videoPlayer)}
             resizeMode={this.state.resizeMode}
             volume={this.state.volume}
-            paused={this.state.paused}
+            paused={this.state.paused || this.props.isCasting}
             muted={this.state.muted}
             rate={this.state.resetRate ? 1 : this.state.rate}
             // rate={this.state.rate}
@@ -1490,6 +1547,7 @@ export default class VideoPlayer extends Component {
           {this.renderSkipIcons()}
           {this.renderError()}
           {this.renderLoader()}
+          {this.renderCastIcon()}
           {this.renderTopControls()}
           {this.renderBottomControls()}
         </View>
@@ -1541,8 +1599,8 @@ const styles = {
       borderRadius: 99999,
       marginHorizontal: 50,
       resizeMode: 'center',
-      backgroundColor: 'rgba(255, 255, 255, 0.25)'
-    }
+      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    },
   }),
   error: StyleSheet.create({
     container: {
@@ -1572,6 +1630,23 @@ const styles = {
       left: 0,
       alignItems: 'center',
       justifyContent: 'center',
+    },
+  }),
+  googleCast: StyleSheet.create({
+    container: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      bottom: 0,
+      left: 0,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'black',
+    },
+    icon: {
+      tintColor: 'white',
+      width: 50,
+      height: 50,
     },
   }),
   controls: StyleSheet.create({
@@ -1637,8 +1712,8 @@ const styles = {
       flexDirection: 'row',
       alignItems: 'center',
       alignSelf: 'stretch',
-      justifyContent: 'space-between'
-    },  
+      justifyContent: 'space-between',
+    },
     volume: {
       flexDirection: 'row',
     },
