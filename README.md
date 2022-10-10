@@ -18,6 +18,8 @@ By default, tapping the screen anywhere will show the player controls. After 10s
 
 Run `npm install --save react-native-video react-native-video-controls`
 
+or, as an alternative `yarn add react-native-video react-native-video-controls`
+
 Then run `react-native link react-native-video`
 
 If you're using RN < 39 run `npm install --save react-native-video-controls@1.0.1`. Note this version includes `react-native-video` as a normal dependency instead of a peer-dependency.
