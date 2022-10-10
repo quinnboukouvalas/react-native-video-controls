@@ -18,6 +18,8 @@ By default, tapping the screen anywhere will show the player controls. After 10s
 
 Run `npm install --save react-native-video react-native-video-controls`
 
+or, as an alternative `yarn add react-native-video react-native-video-controls`
+
 Then run `react-native link react-native-video`
 
 If you're using RN < 39 run `npm install --save react-native-video-controls@1.0.1`. Note this version includes `react-native-video` as a normal dependency instead of a peer-dependency.
@@ -68,12 +70,8 @@ In addition, the `<VideoPlayer />` also takes these props:
 | seekColor                    | String(#HEX) | '#FFF'  | Fill/handle colour of the seekbar                                                                                                                                |
 | style                        | StyleSheet   | null    | React Native StyleSheet object that is appended to the video's parent `<View>`                                                                                   |
 | tapAnywhereToPause           | Boolean      | false   | If true, single tapping anywhere on the video (other than a control) toggles between playing and paused.                                                         |
-
 | showTimeRemaining            | Boolean      | true    | If true, show the time remaing, else show the current time in the Player.
-`<View>`
-
 | showHours                    | Boolean      | false   | If true, convert time to hours in the Player
-`<View>`
 
 ### Events
 
