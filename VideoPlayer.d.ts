@@ -59,6 +59,8 @@ interface VideoPlayerProperties extends VideoProperties {
   disableTimer?: boolean;
   /** Hide the back button */
   disableBack?: boolean;
+  videoResolution?: any;
+  videoSources?: any;
 }
 
 export default class VideoPlayer extends Component<VideoPlayerProperties> {
